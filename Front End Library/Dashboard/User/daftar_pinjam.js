@@ -1,6 +1,6 @@
 // assets/js/peminjaman.js
 
-const API_URL = 'http://localhost/backend-fapus/public/api';
+const API_URL = "http://localhost:8080/api";
 
 document.addEventListener('DOMContentLoaded', () => {
     // Menampilkan username pengguna saat ini

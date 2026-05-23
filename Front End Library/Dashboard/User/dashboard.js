@@ -9,7 +9,6 @@ document.addEventListener("DOMContentLoaded", function () {
   // 1. PROTEKSI HALAMAN (LOGIN CHECK)
   if (!sessionUser) {
     alert("Akses ditolak! Silakan login terlebih dahulu.");
-    // Arahkan ke halaman login di root folder (sesuaikan dengan struktur Anda)
     window.location.href = "../../Login/login.html";
     return;
   }
@@ -29,16 +28,13 @@ document.addEventListener("DOMContentLoaded", function () {
     elNamaUser.innerText = dataUser.username || "Member";
   }
 
-  // Jalankan Animasi Alert Selamat Datang selama 5 detik
+  // ========================================================
+  // PERBAIKAN: TAMPILKAN BANNER SELAMAT DATANG (TANPA DIHAPUS/DIHILANGKAN)
+  // ========================================================
   const welcomeAlert = document.getElementById("welcome-alert");
   if (welcomeAlert) {
     welcomeAlert.style.display = "block";
-    setTimeout(function () {
-      welcomeAlert.classList.add("alert-fade-out");
-      setTimeout(function () {
-        welcomeAlert.style.display = "none";
-      }, 500);
-    }, 5000);
+    welcomeAlert.classList.add("welcome-banner-show"); // Memicu animasi fade-in smooth ke atas
   }
 
   // 2. JALANKAN FUNGSI UTAMA
@@ -52,9 +48,6 @@ document.addEventListener("DOMContentLoaded", function () {
       muatDataBuku(kataKunci);
     });
   }
-
-  // 4. LOGIKA TOMBOL LOGOUT (Dipindah ke file HTML sesuai diskusi sebelumnya)
-  // Tidak perlu ada di sini lagi karena sudah ada script logout di paling bawah file dashboard.html
 });
 
 
@@ -96,30 +89,26 @@ async function muatDataBuku(filterKataKunci = "") {
       }
 
       dataTerfilter.forEach((item) => {
-        // Disinkronkan dengan output format dari API /buku yang telah dibuat di Admin
         let kategoriBuku = item.kategori || "Kategori Tidak Diketahui";
         let judulAsli = item.judul || "Tanpa Judul";
         let arrayJudul = judulAsli.split(" ");
         let judulPendek = arrayJudul.length > 3 ? arrayJudul.slice(0, 3).join(" ") + "..." : judulAsli;
 
-        let namaFileGambar = item.cover && item.cover !== 'default.jpg' ? item.cover : "default-book.png"; 
-        
-        // Sesuaikan folder path gambar dengan yang ada di API Anda (uploads/cover)
-        let urlCover = namaFileGambar === "default-book.png" 
-            ? `../../images/default-book.png` 
-            : `http://localhost:8080/uploads/cover/${namaFileGambar}`;
+        let namaFileGambar = item.cover && item.cover !== 'default.jpg' ? item.cover : ""; 
+        let urlCover = namaFileGambar ? `http://localhost:8080/uploads/cover/${namaFileGambar}` : `../../images/a.png`;
 
         let judulAman = judulAsli.replace(/'/g, "\\'");
 
-        // Gunakan struktur desain CSS Card yang sudah Anda buat
+        // Struktur HTML untuk Card & Modal (dengan desain modern)
         let templateCard = `
             <div class="card m-2" style="width: 12rem; display: inline-block; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
               <img src="${urlCover}" 
                   class="card-img-top"
                   alt="${judulAsli}"
-                  style="height: 250px; object-fit: cover;">
+                  style="height: 250px; object-fit: cover;"
+                  onerror="this.onerror=null; this.src='../../images/a.png'">
               <div class="card-body text-center d-flex flex-column justify-content-between p-2" style="height: 120px;">
-                  <h6 style="font-weight:bold; color:black; font-size: 14px; margin-bottom: 5px;">
+                  <h6 style="font-weight:bold; color:black; font-size: 14px; margin-bottom: 5px;" title="${judulAsli}">
                       ${judulPendek}
                   </h6>
                   <small class="text-muted d-block mb-2">
@@ -134,27 +123,61 @@ async function muatDataBuku(filterKataKunci = "") {
               </div>
             </div>
 
-            <div id="cek${item.id_buku}" class="modal fade" tabindex="-1" aria-hidden="true">
+            <div class="modal fade" id="cek${item.id_buku}" tabindex="-1" aria-hidden="true">
               <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-titlefw-bold text-success">Detail Buku</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                  
+                  <div class="modal-header border-0" style="background: linear-gradient(135deg, #1a8a42 0%, #10632b 100%); padding: 20px 25px;">
+                    <h5 class="modal-title fw-bold text-white d-flex align-items-center">
+                      <i class="fas fa-book-open me-2"></i> Informasi Buku
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
                   </div>
-                  <div class="modal-body text-center">
-                    <img src="${urlCover}" class="img-thumbnail mb-3" style="height: 260px; width: 180px; object-fit: cover; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-                    <h4 class="font-weight-bold text-dark mt-2 mb-3">${judulAsli}</h4>
-                    
-                    <div class="text-start px-4">
-                        <p class="mb-1"><strong>Kategori:</strong> <span style="color: blue;">${kategoriBuku}</span></p>
-                        <p class="mb-1"><strong>Pengarang:</strong> ${item.pengarang || 'N/A'}</p>
-                        <p class="mb-1"><strong>Penerbit:</strong> ${item.penerbit || 'N/A'}</p>
-                        <p class="mb-1"><strong>Tahun Terbit:</strong> ${item.thn_terbit || 'N/A'}</p>  
+
+                  <div class="modal-body position-relative" style="background-color: #f8fbfa; padding: 0 0 30px 0;">
+                    <div style="height: 120px; background: linear-gradient(135deg, #1a8a42 0%, #10632b 100%); border-radius: 0 0 50% 50% / 0 0 40px 40px;"></div>
+
+                    <div class="text-center px-4" style="margin-top: -85px;">
+                      <div class="d-inline-block bg-white p-1 rounded-3 mb-3" style="box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+                        <img src="${urlCover}" class="img-fluid rounded-2" alt="Cover Buku" style="height: 220px; width: 150px; object-fit: cover;" onerror="this.onerror=null; this.src='../../images/a.png'">
+                      </div>
+                      
+                      <h4 class="fw-bold text-dark mb-2" style="font-size: 1.4rem; line-height: 1.3;">${judulAsli}</h4>
+                      
+                      <div class="mb-4">
+                        <span class="badge shadow-sm" style="background-color: #e8f5e9; color: #1a8a42; border: 1px solid #c8e6c9; font-size: 0.85rem; padding: 7px 16px; font-weight: 600;">
+                          <i class="fas fa-tag me-1"></i> <span>${kategoriBuku}</span>
+                        </span>
+                      </div>
+                      
+                      <div class="card border-0 shadow-sm rounded-4 text-start mx-auto" style="background-color: #ffffff;">
+                        <div class="card-body p-3 px-4">
+                          <div class="d-flex align-items-center mb-2 pb-2 border-bottom">
+                            <div class="text-center" style="width: 35px; color: #1a8a42;"><i class="fas fa-user-edit"></i></div>
+                            <div class="text-muted" style="width: 100px; font-size: 0.9rem;">Pengarang</div>
+                            <div class="fw-semibold text-dark flex-grow-1" style="font-size: 0.95rem;">${item.pengarang || '-'}</div>
+                          </div>
+                          
+                          <div class="d-flex align-items-center mb-2 pb-2 border-bottom">
+                            <div class="text-center" style="width: 35px; color: #1a8a42;"><i class="fas fa-building"></i></div>
+                            <div class="text-muted" style="width: 100px; font-size: 0.9rem;">Penerbit</div>
+                            <div class="fw-semibold text-dark flex-grow-1" style="font-size: 0.95rem;">${item.penerbit || '-'}</div>
+                          </div>
+                          
+                          <div class="d-flex align-items-center">
+                            <div class="text-center" style="width: 35px; color: #1a8a42;"><i class="fas fa-calendar-alt"></i></div>
+                            <div class="text-muted" style="width: 100px; font-size: 0.9rem;">Tahun</div>
+                            <div class="fw-semibold text-dark flex-grow-1" style="font-size: 0.95rem;">${item.thn_terbit || '-'}</div>
+                          </div>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
-                  <div class="modal-footer justify-content-center">
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Tutup</button>
-                    <button type="button" onclick="alihkanKePeminjaman('${judulAman}')" class="btn btn-success px-4" data-bs-dismiss="modal">
+
+                  <div class="modal-footer border-0 d-flex justify-content-center gap-2 pb-4 pt-1" style="background-color: #f8fbfa;">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal" style="border-radius: 10px; font-weight: 500; border: 1px solid #dee2e6; color: #000000;">Batal</button>
+                    <button type="button" onclick="alihkanKePeminjaman('${judulAman}')" class="btn btn-success px-4 shadow-sm" style="background-color: #1a8a42; border-color: #1a8a42; border-radius: 10px; font-weight: 600;" data-bs-dismiss="modal">
                       <i class="fas fa-bookmark me-1"></i> Pinjam Buku Ini
                     </button>
                   </div>
@@ -177,5 +200,5 @@ async function muatDataBuku(filterKataKunci = "") {
 
 function alihkanKePeminjaman(judulBuku) {
   const judulEncoded = encodeURIComponent(judulBuku);
-  window.location.href = `daftar_pinjam.html?judul=${judulEncoded}&action=tambah`;
+  window.location.href = `detail_pinjam.html?judul=${judulEncoded}&action=tambah`;
 }

@@ -9,11 +9,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadBuku() {
     const container = document.getElementById('booksContainer');
+    if (!container) return;
     
     try {
         const response = await fetch(`${API_URL}/buku`);
-        const data = await response.json();
+        const result = await response.json();
         
+        // PENGECEKAN ARRAY agar data.forEach tidak error!
+        let data = [];
+        if (Array.isArray(result)) {
+            data = result;
+        } else if (result.data && Array.isArray(result.data)) {
+            data = result.data;
+        } else if (result.messages && Array.isArray(result.messages)) {
+            data = result.messages; 
+        }
+
         container.innerHTML = ''; 
         
         if (data.length === 0) {
@@ -27,19 +38,21 @@ async function loadBuku() {
         dataBukuGlobal = data;
 
         data.forEach(book => {
-            const coverPath = book.cover ? `http://localhost/backend-fapus/public/imgDB/${book.cover}` : '/images/a.png';
+            // Ubah jalur fallback sesuai dengan yang sukses di buku.js
+            const coverPath = book.cover ? `http://localhost/backend-fapus/public/imgDB/${book.cover}` : '../../images/a.png';
             
             const cardHTML = `
-                <div class="card" style="width: 160px;" onclick="bukaModalDetail(${book.id_buku})">
+                <div class="card" style="width: 160px; cursor: pointer; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" onclick="bukaModalDetail('${book.id_buku}')">
                     <img src="${coverPath}" 
                          class="card-img-top" 
                          alt="Cover Buku" 
-                         onerror="this.src='/images/a.png'">
-                    <div class="card-body">
-                        <h6 class="card-title">${book.judul}</h6>
+                         style="height: 220px; object-fit: cover;"
+                         onerror="this.onerror=null; this.src='../../images/a.png'"> 
+                         <div class="card-body p-3">
+                        <h6 class="card-title text-truncate fw-bold text-dark m-0" title="${book.judul}">${book.judul}</h6>
                     </div>
                     <ul class="list-group list-group-flush">
-                        <li class="list-group-item">${book.kategori}</li>
+                        <li class="list-group-item text-muted border-top-0 pt-0 pb-3" style="font-size: 13px;">${book.kategori}</li>
                     </ul>
                 </div>
             `;
@@ -59,10 +72,16 @@ function bukaModalDetail(idBuku) {
     const book = dataBukuGlobal.find(b => b.id_buku == idBuku);
     
     if (book) {
-        const coverPath = book.cover ? `http://localhost/backend-fapus/public/imgDB/${book.cover}` : '/images/a.png';
+        // Sesuaikan path fallback-nya juga di sini
+        const coverPath = book.cover ? `http://localhost/backend-fapus/public/imgDB/${book.cover}` : '../../images/a.png';
         
         document.getElementById('detailCover').src = coverPath;
-        document.getElementById('detailCover').onerror = function() { this.src = '/images/a.png'; };
+        
+        // Tambahkan this.onerror=null juga di sini
+        document.getElementById('detailCover').onerror = function() { 
+            this.onerror = null; 
+            this.src = '../../images/a.png'; 
+        };
         
         document.getElementById('detailJudul').innerText = `: ${book.judul}`;
         document.getElementById('detailKategori').innerText = `: ${book.kategori}`;
@@ -72,7 +91,8 @@ function bukaModalDetail(idBuku) {
         document.getElementById('detailHalaman').innerText = `: ${book.jml_halaman}`;
         document.getElementById('detailDeskripsi').innerText = `: ${book.deskripsi}`;
 
-        const detailModal = new bootstrap.Modal(document.getElementById('modalDetailBuku'));
+        const modalEl = document.getElementById('modalDetailBuku');
+        const detailModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
         detailModal.show();
     }
 }
